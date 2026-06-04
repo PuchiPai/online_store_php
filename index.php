@@ -1,2 +1,2 @@
 <?php
-echo "Hello Shop";
+include 'pages/home.php';
