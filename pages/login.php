@@ -1,4 +1,6 @@
-<?php include "../includes/db.php"; ?>
+<?php
+require_once __DIR__ . '/../includes/bootstrap.php';
+?>
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -13,19 +15,11 @@
 <?php endif; ?>
 
 <form action="login_action.php" method="post">
-    <p>
-        <input type="email" name="email" placeholder="Email" required>
-    </p>
-
-    <p>
-        <input type="password" name="password" placeholder="Пароль" required>
-    </p>
-
+    <p><input type="email" name="email" placeholder="Email" required></p>
+    <p><input type="password" name="password" placeholder="Пароль" required></p>
     <button type="submit">Войти</button>
 </form>
 
-<p>
-    <a href="register.php">Нет аккаунта? Регистрация</a>
-</p>
+<p><a href="register.php">Нет аккаунта? Регистрация</a></p>
 </body>
 </html>

@@ -1,2 +1,3 @@
 <?php
-include 'pages/home.php';
+header("Location: pages/catalog.php");
+exit;
