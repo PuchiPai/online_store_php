@@ -1,32 +1,33 @@
 <?php
-declare(strict_types=1);
 
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-function h(mixed $value): string
+function h($value)
 {
-    return htmlspecialchars((string)$value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+    return htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8');
 }
 
-function isLoggedIn(): bool
+function isLoggedIn()
 {
     return !empty($_SESSION['user_id']);
 }
 
-function isAdmin(): bool
+function isAdmin()
 {
-    return (($_SESSION['user_role'] ?? '') === 'admin');
+    return isset($_SESSION['user_role'])
+        && $_SESSION['user_role'] === 'admin';
 }
 
-function cartCount(): int
+function cartCount()
 {
     $cart = $_SESSION['cart'] ?? [];
-    return array_sum(array_map('intval', $cart));
+
+    return array_sum($cart);
 }
 
-function redirect(string $path): void
+function redirect($path)
 {
     header('Location: ' . $path);
     exit;

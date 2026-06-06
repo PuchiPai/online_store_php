@@ -1,23 +1,44 @@
 <?php
 session_start();
-require_once __DIR__ . '/../../../includes/bootstrap.php';
+include "../../includes/db.php";
 
 if (!isset($_SESSION["user_id"]) || ($_SESSION["user_role"] ?? "") !== "admin") {
     die("Доступ запрещен");
 }
 
-$id = (int)($_GET["id"] ?? 0);
+$result = $conn->query("SELECT id, name FROM categories ORDER BY id DESC");
+?>
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Категории</title>
+</head>
+<body>
+<h2>Категории</h2>
 
-if ($id <= 0) {
-    die("Некорректный ID");
-}
+<p>
+    <a href="../index.php">← Назад в админку</a> |
+    <a href="add.php">Добавить категорию</a>
+</p>
 
-$stmt = $conn->prepare("DELETE FROM products WHERE id = ?");
-$stmt->bind_param("i", $id);
+<table border="1" cellpadding="8" cellspacing="0">
+    <tr>
+        <th>ID</th>
+        <th>Название</th>
+        <th>Действия</th>
+    </tr>
 
-if ($stmt->execute()) {
-    header("Location: list.php");
-    exit;
-}
-
-die("Ошибка удаления товара");
+    <?php while ($cat = $result->fetch_assoc()): ?>
+        <tr>
+            <td><?= $cat["id"] ?></td>
+            <td><?= htmlspecialchars($cat["name"]) ?></td>
+            <td>
+                <a href="edit.php?id=<?= $cat["id"] ?>">Редактировать</a> |
+                <a href="delete.php?id=<?= $cat["id"] ?>" onclick="return confirm('Удалить категорию?')">Удалить</a>
+            </td>
+        </tr>
+    <?php endwhile; ?>
+</table>
+</body>
+</html>

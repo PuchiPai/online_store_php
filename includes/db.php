@@ -1,16 +1,19 @@
 <?php
-declare(strict_types=1);
 
 $DB_HOST = 'localhost';
 $DB_USER = 'root';
 $DB_PASS = '';
 $DB_NAME = 'shop_db';
 
-mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
+$conn = new mysqli(
+    $DB_HOST,
+    $DB_USER,
+    $DB_PASS,
+    $DB_NAME
+);
 
-try {
-    $conn = new mysqli($DB_HOST, $DB_USER, $DB_PASS, $DB_NAME);
-    $conn->set_charset('utf8mb4');
-} catch (mysqli_sql_exception $e) {
-    die('Ошибка подключения к базе данных');
+if ($conn->connect_error) {
+    die('Ошибка подключения к БД');
 }
+
+$conn->set_charset('utf8mb4');
