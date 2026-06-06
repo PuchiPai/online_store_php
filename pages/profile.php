@@ -32,7 +32,9 @@ $user = $result->fetch_assoc();
 <p>
     <a href="catalog.php">Каталог</a> |
     <a href="cart.php">Корзина</a> |
+    <a href="orders.php">Мои заказы</a> |
     <a href="logout.php">Выйти</a>
+
 </p>
 </body>
 </html>

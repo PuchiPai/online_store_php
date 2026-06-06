@@ -9,7 +9,8 @@ if (!isset($_SESSION["user_id"]) || ($_SESSION["user_role"] ?? "") !== "admin") 
 $order_id = (int)($_GET["id"] ?? 0);
 
 $stmt = $conn->prepare("
-    SELECT orders.id, orders.status, orders.created_at, users.name AS user_name, users.email AS user_email
+    SELECT orders.id, orders.status, orders.created_at,
+           users.name AS user_name, users.email AS user_email
     FROM orders
     JOIN users ON orders.user_id = users.id
     WHERE orders.id = ?
@@ -34,13 +35,7 @@ $stmt->bind_param("i", $order_id);
 $stmt->execute();
 $items = $stmt->get_result();
 ?>
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <title>Просмотр заказа</title>
-</head>
-<body>
+
 <h2>Заказ #<?= $order["id"] ?></h2>
 
 <p><b>Пользователь:</b> <?= htmlspecialchars($order["user_name"]) ?></p>
@@ -49,7 +44,8 @@ $items = $stmt->get_result();
 <p><b>Дата:</b> <?= htmlspecialchars($order["created_at"]) ?></p>
 
 <h3>Товары</h3>
-<table border="1" cellpadding="8" cellspacing="0">
+
+<table border="1" cellpadding="8">
     <tr>
         <th>Название</th>
         <th>Количество</th>
@@ -75,15 +71,17 @@ $items = $stmt->get_result();
 <p><b>Итого: <?= $total ?> ₽</b></p>
 
 <h3>Изменить статус</h3>
-<form action="update_status.php" method="post">
+
+<form method="post" action="update_status.php">
     <input type="hidden" name="id" value="<?= $order["id"] ?>">
+
     <select name="status">
         <option value="new" <?= $order["status"] === "new" ? "selected" : "" ?>>new</option>
-        <option value="in_progress" <?= $order["status"] === "in_progress" ? "selected" : "" ?>>in_progress</option>
+        <option value="processing" <?= $order["status"] === "processing" ? "selected" : "" ?>>processing</option>
         <option value="done" <?= $order["status"] === "done" ? "selected" : "" ?>>done</option>
-        <option value="cancelled" <?= $order["status"] === "cancelled" ? "selected" : "" ?>>cancelled</option>
     </select>
-    <button type="submit">Сохранить</button>
+
+    <button>Сохранить</button>
 </form>
 
 <p><a href="list.php">← Назад</a></p>
