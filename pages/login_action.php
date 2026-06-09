@@ -1,10 +1,8 @@
 <?php
-session_start();
-include "../includes/db.php";
+require_once __DIR__ . '/../includes/bootstrap.php';
 
 if ($_SERVER["REQUEST_METHOD"] !== "POST") {
-    header("Location: login.php");
-    exit;
+    redirect('login.php');
 }
 
 $email = trim($_POST["email"] ?? '');
@@ -34,9 +32,7 @@ $_SESSION["user_name"] = $user["name"];
 $_SESSION["user_role"] = $user["role"];
 
 if ($user["role"] === "admin") {
-    header("Location: ../admin/index.php");
-    exit;
+    redirect('../admin/index.php');
 }
 
-header("Location: profile.php");
-exit;
+redirect('profile.php');
