@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Хост: 127.0.0.1:3306
--- Время создания: Июн 08 2026 г., 14:57
+-- Время создания: Июн 09 2026 г., 08:20
 -- Версия сервера: 5.6.51
 -- Версия PHP: 7.2.34
 
@@ -102,8 +102,8 @@ CREATE TABLE `products` (
 --
 
 INSERT INTO `products` (`id`, `name`, `description`, `price`, `image`, `category_id`) VALUES
-(2, 'iPhone 15', 'Смартфон Apple', '99999.00', NULL, 2),
-(3, 'AirPods Pro', 'Беспроводные наушники', '19999.00', '1780728615_5233.jpg', 3);
+(2, 'iPhone 15', 'Смартфон Apple', '99999.00', 'iphone15.jpg', 2),
+(3, 'AirPods Pro', 'Беспроводные наушники', '19999.00', 'airpods.jpg', 3);
 
 -- --------------------------------------------------------
 
@@ -126,7 +126,8 @@ CREATE TABLE `users` (
 
 INSERT INTO `users` (`id`, `name`, `email`, `password`, `role`, `created_at`) VALUES
 (1, 'katya', 'cdreemurr97@gmail.com', '$2y$10$Nso9/CavcA5MvZvGFvb1yOWkVhksx65sYbnsF1CGMCmXzuqM3QiA6', 'user', '2026-06-06 05:56:54'),
-(2, 'admin', 'admin@admin.ru', '$2y$10$enuhIwhVslh8b7utXibNY.HGQ2v6YaqxrIUbqfiAyjBZ5QiRO4biy', 'admin', '2026-06-06 06:16:48');
+(2, 'admin', 'admin@admin.ru', '$2y$10$enuhIwhVslh8b7utXibNY.HGQ2v6YaqxrIUbqfiAyjBZ5QiRO4biy', 'admin', '2026-06-06 06:16:48'),
+(3, 'Арина', 'kozlovich06@bk.ru', '$2y$10$I8wu/FEEHxgOORZbN.erNO8rv/A0J62PIDnpvhyLAjYTlUkDx3KL2', 'user', '2026-06-08 15:05:21');
 
 --
 -- Индексы сохранённых таблиц
@@ -199,7 +200,7 @@ ALTER TABLE `products`
 -- AUTO_INCREMENT для таблицы `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- Ограничения внешнего ключа сохраненных таблиц
