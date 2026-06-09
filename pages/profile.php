@@ -19,22 +19,41 @@ $user = $result->fetch_assoc();
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Профиль</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Личный кабинет — TechStore</title>
+    <link rel="stylesheet" href="/assets/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
-<body>
-<h2>Профиль пользователя</h2>
+<body class="auth-page">  <!-- тот же класс, что на логине – абстрактный фон -->
+    <div class="profile-container">
+        <h1 class="profile-title">Личный кабинет</h1>
+        
+        <div class="profile-card">
+            <div class="profile-avatar">
+                <span class="avatar-placeholder">👤</span>
+            </div>
+            <div class="profile-info">
+                <div class="info-row">
+                    <span class="info-label">Имя</span>
+                    <span class="info-value"><?= h($user["name"]) ?></span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Email</span>
+                    <span class="info-value"><?= h($user["email"]) ?></span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Роль</span>
+                    <span class="info-value role-<?= h($user["role"]) ?>"><?= ($user["role"] === 'admin' ? 'Администратор' : 'Покупатель') ?></span>
+                </div>
+            </div>
+        </div>
 
-<p><b>ID:</b> <?= h($user["id"]) ?></p>
-<p><b>Имя:</b> <?= h($user["name"]) ?></p>
-<p><b>Email:</b> <?= h($user["email"]) ?></p>
-<p><b>Роль:</b> <?= h($user["role"]) ?></p>
-
-<p>
-    <a href="catalog.php">Каталог</a> |
-    <a href="cart.php">Корзина</a> |
-    <a href="orders.php">Мои заказы</a> |
-    <a href="logout.php">Выйти</a>
-
-</p>
+        <div class="profile-actions">
+            <a href="catalog.php" class="profile-link">Каталог</a>
+            <a href="cart.php" class="profile-link">Корзина</a>
+            <a href="orders.php" class="profile-link">Мои заказы</a>
+            <a href="logout.php" class="profile-link logout">Выйти</a>
+        </div>
+    </div>
 </body>
 </html>
