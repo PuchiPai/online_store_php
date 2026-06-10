@@ -1,16 +1,18 @@
 <?php
-session_start();
 require_once __DIR__ . '/../../includes/bootstrap.php';
-
-if (!isset($_SESSION["user_id"]) || ($_SESSION["user_role"] ?? "") !== "admin") {
-    die("Доступ запрещен");
-}
+requireAdmin();
 
 $result = $conn->query("
-    SELECT orders.id, orders.status, orders.created_at, users.name AS user_name, users.email AS user_email
-    FROM orders
-    JOIN users ON orders.user_id = users.id
-    ORDER BY orders.id DESC
+    SELECT
+        o.id,
+        o.status,
+        o.total_amount,
+        o.created_at,
+        u.name AS user_name,
+        u.email AS user_email
+    FROM orders o
+    JOIN users u ON o.user_id = u.id
+    ORDER BY o.id DESC
 ");
 ?>
 <!DOCTYPE html>
@@ -30,20 +32,22 @@ $result = $conn->query("
         <th>Пользователь</th>
         <th>Email</th>
         <th>Статус</th>
+        <th>Сумма</th>
         <th>Дата</th>
         <th>Действия</th>
     </tr>
 
     <?php while ($order = $result->fetch_assoc()): ?>
         <tr>
-            <td><?= $order["id"] ?></td>
+            <td><?= (int)$order["id"] ?></td>
             <td><?= htmlspecialchars($order["user_name"]) ?></td>
             <td><?= htmlspecialchars($order["user_email"]) ?></td>
             <td><?= htmlspecialchars($order["status"]) ?></td>
+            <td><?= htmlspecialchars($order["total_amount"]) ?> ₽</td>
             <td><?= htmlspecialchars($order["created_at"]) ?></td>
             <td>
-                <a href="view.php?id=<?= $order["id"] ?>">Просмотр</a> |
-                <a href="view.php?id=<?= $order["id"] ?>">Изменить статус</a>
+                <a href="view.php?id=<?= (int)$order["id"] ?>">Просмотр</a> |
+                <a href="view.php?id=<?= (int)$order["id"] ?>">Изменить статус</a>
             </td>
         </tr>
     <?php endwhile; ?>

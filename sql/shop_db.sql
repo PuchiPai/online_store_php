@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Хост: 127.0.0.1:3306
--- Время создания: Июн 09 2026 г., 08:20
+-- Время создания: Июн 10 2026 г., 08:32
 -- Версия сервера: 5.6.51
 -- Версия PHP: 7.2.34
 
@@ -50,6 +50,8 @@ INSERT INTO `categories` (`id`, `name`) VALUES
 CREATE TABLE `orders` (
   `id` int(10) UNSIGNED NOT NULL,
   `user_id` int(10) UNSIGNED NOT NULL,
+  `items_json` longtext COLLATE utf8mb4_unicode_ci,
+  `total_amount` decimal(10,2) NOT NULL DEFAULT '0.00',
   `status` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT 'new',
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -58,29 +60,9 @@ CREATE TABLE `orders` (
 -- Дамп данных таблицы `orders`
 --
 
-INSERT INTO `orders` (`id`, `user_id`, `status`, `created_at`) VALUES
-(1, 1, 'new', '2026-06-06 06:15:36');
-
--- --------------------------------------------------------
-
---
--- Структура таблицы `order_items`
---
-
-CREATE TABLE `order_items` (
-  `id` int(10) UNSIGNED NOT NULL,
-  `order_id` int(10) UNSIGNED NOT NULL,
-  `product_id` int(10) UNSIGNED NOT NULL,
-  `quantity` int(11) NOT NULL,
-  `price` decimal(10,2) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
---
--- Дамп данных таблицы `order_items`
---
-
-INSERT INTO `order_items` (`id`, `order_id`, `product_id`, `quantity`, `price`) VALUES
-(1, 1, 3, 1, '19999.00');
+INSERT INTO `orders` (`id`, `user_id`, `items_json`, `total_amount`, `status`, `created_at`) VALUES
+(1, 1, '[{\"product_id\":3,\"name\":\"AirPods Pro\",\"quantity\":1,\"price\":19999}]', '19999.00', 'new', '2026-06-06 06:15:36'),
+(2, 1, '[{\"product_id\":3,\"name\":\"AirPods Pro\",\"quantity\":1,\"price\":29999},{\"product_id\":2,\"name\":\"iPhone 15\",\"quantity\":1,\"price\":99999}]', '129998.00', 'new', '2026-06-10 05:17:11');
 
 -- --------------------------------------------------------
 
@@ -103,7 +85,7 @@ CREATE TABLE `products` (
 
 INSERT INTO `products` (`id`, `name`, `description`, `price`, `image`, `category_id`) VALUES
 (2, 'iPhone 15', 'Смартфон Apple', '99999.00', 'iphone15.jpg', 2),
-(3, 'AirPods Pro', 'Беспроводные наушники', '19999.00', 'airpods.jpg', 3);
+(3, 'AirPods Pro', 'Беспроводные наушники', '29999.00', 'airpods.jpg', 3);
 
 -- --------------------------------------------------------
 
@@ -127,7 +109,7 @@ CREATE TABLE `users` (
 INSERT INTO `users` (`id`, `name`, `email`, `password`, `role`, `created_at`) VALUES
 (1, 'katya', 'cdreemurr97@gmail.com', '$2y$10$Nso9/CavcA5MvZvGFvb1yOWkVhksx65sYbnsF1CGMCmXzuqM3QiA6', 'user', '2026-06-06 05:56:54'),
 (2, 'admin', 'admin@admin.ru', '$2y$10$enuhIwhVslh8b7utXibNY.HGQ2v6YaqxrIUbqfiAyjBZ5QiRO4biy', 'admin', '2026-06-06 06:16:48'),
-(3, 'Арина', 'kozlovich06@bk.ru', '$2y$10$I8wu/FEEHxgOORZbN.erNO8rv/A0J62PIDnpvhyLAjYTlUkDx3KL2', 'user', '2026-06-08 15:05:21');
+(3, 'Арина', 'kozlovich06@bk.ru', 'HASH_ЕСЛИ_НУЖНО', 'user', '2026-06-09 06:09:22');
 
 --
 -- Индексы сохранённых таблиц
@@ -145,14 +127,6 @@ ALTER TABLE `categories`
 ALTER TABLE `orders`
   ADD PRIMARY KEY (`id`),
   ADD KEY `user_id` (`user_id`);
-
---
--- Индексы таблицы `order_items`
---
-ALTER TABLE `order_items`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `order_id` (`order_id`),
-  ADD KEY `product_id` (`product_id`);
 
 --
 -- Индексы таблицы `products`
@@ -182,13 +156,7 @@ ALTER TABLE `categories`
 -- AUTO_INCREMENT для таблицы `orders`
 --
 ALTER TABLE `orders`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
-
---
--- AUTO_INCREMENT для таблицы `order_items`
---
-ALTER TABLE `order_items`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT для таблицы `products`
@@ -211,13 +179,6 @@ ALTER TABLE `users`
 --
 ALTER TABLE `orders`
   ADD CONSTRAINT `orders_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
-
---
--- Ограничения внешнего ключа таблицы `order_items`
---
-ALTER TABLE `order_items`
-  ADD CONSTRAINT `order_items_ibfk_1` FOREIGN KEY (`order_id`) REFERENCES `orders` (`id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `order_items_ibfk_2` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`);
 
 --
 -- Ограничения внешнего ключа таблицы `products`

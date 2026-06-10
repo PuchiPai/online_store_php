@@ -2,14 +2,11 @@
 require_once __DIR__ . '/../includes/bootstrap.php';
 requireLogin();
 
-$cart = $_SESSION["cart"] ?? [];
+$cart = $_SESSION['cart'] ?? [];
 
 if (empty($cart)) {
-    die("Корзина пуста");
+    die('Корзина пуста');
 }
-
-$items = [];
-$total = 0;
 
 $ids = array_map('intval', array_keys($cart));
 $ids_sql = implode(',', $ids);
@@ -20,107 +17,97 @@ $result = $conn->query("
     WHERE id IN ($ids_sql)
 ");
 
+$items = [];
+$total = 0;
+
 while ($row = $result->fetch_assoc()) {
-    $items[(int)$row["id"]] = $row;
-}
-
-foreach ($cart as $product_id => $quantity) {
-    $product_id = (int)$product_id;
-    $quantity = (int)$quantity;
-
-    if (isset($items[$product_id])) {
-        $total += ((float)$items[$product_id]["price"] * $quantity);
-    }
-}
-
-if ($_SERVER["REQUEST_METHOD"] === "POST") {
-    $user_id = currentUserId();
-
-    $conn->begin_transaction();
-
-    try {
-        $stmt = $conn->prepare("INSERT INTO orders (user_id, status) VALUES (?, 'new')");
-        $stmt->bind_param("i", $user_id);
-        $stmt->execute();
-
-        $order_id = $conn->insert_id;
-
-        $stmt_product = $conn->prepare("SELECT price FROM products WHERE id = ?");
-        $stmt_item = $conn->prepare("
-            INSERT INTO order_items (order_id, product_id, quantity, price)
-            VALUES (?, ?, ?, ?)
-        ");
-
-        foreach ($cart as $product_id => $quantity) {
-            $product_id = (int)$product_id;
-            $quantity = (int)$quantity;
-
-            $stmt_product->bind_param("i", $product_id);
-            $stmt_product->execute();
-            $product_result = $stmt_product->get_result();
-
-            if ($product_result->num_rows === 0) {
-                throw new Exception("Товар не найден");
-            }
-
-            $product = $product_result->fetch_assoc();
-            $price = (float)$product["price"];
-
-            $stmt_item->bind_param("iiid", $order_id, $product_id, $quantity, $price);
-            $stmt_item->execute();
-        }
-
-        $conn->commit();
-        unset($_SESSION["cart"]);
-
-        ?>
-        <!DOCTYPE html>
-        <html lang="ru">
-        <head>
-            <meta charset="UTF-8">
-            <title>Заказ оформлен</title>
-        </head>
-        <body>
-        <h2>Заказ успешно оформлен</h2>
-        <p>Номер заказа: <?= (int)$order_id ?></p>
-        <p><a href="catalog.php">Вернуться в каталог</a></p>
-        </body>
-        </html>
-        <?php
-        exit;
-    } catch (Throwable $e) {
-        $conn->rollback();
-        die("Ошибка оформления заказа: " . h($e->getMessage()));
-    }
+    $items[(int)$row['id']] = $row;
 }
 ?>
 <!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Оформление заказа</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Оформление заказа — TechStore</title>
+    <link rel="stylesheet" href="/assets/css/style.css">
 </head>
-<body>
-<h2>Оформление заказа</h2>
+<body class="auth-page">
+<div class="profile-container">
+    <h1 class="cart-title">Оформление заказа</h1>
 
-<p><a href="cart.php">← Назад в корзину</a></p>
+    <div class="profile-card">
+        <form id="checkoutForm" action="../api/create_order.php" method="post">
+            <h3>Состав заказа</h3>
 
-<h3>Состав заказа</h3>
-<ul>
-    <?php foreach ($cart as $product_id => $quantity): ?>
-        <?php $product_id = (int)$product_id; ?>
-        <?php if (!isset($items[$product_id])) continue; ?>
-        <li>
-            <?= h($items[$product_id]["name"]) ?> —
-            <?= (int)$quantity ?> шт.
-        </li>
-    <?php endforeach; ?>
-</ul>
+            <?php foreach ($cart as $product_id => $quantity): ?>
+                <?php $product_id = (int)$product_id; ?>
+                <?php if (!isset($items[$product_id])) continue; ?>
+                <?php
+                $sum = (float)$items[$product_id]['price'] * (int)$quantity;
+                $total += $sum;
+                ?>
+                <p style="margin: 0.5rem 0;">
+                    <?= h($items[$product_id]['name']) ?> —
+                    <?= (int)$quantity ?> шт × <?= number_format((float)$items[$product_id]['price'], 0, '', ' ') ?> ₽ =
+                    <?= number_format($sum, 0, '', ' ') ?> ₽
+                </p>
+            <?php endforeach; ?>
 
-<p><b>Итого: <?= $total ?> ₽</b></p>
+            <hr>
 
-<form method="post">
-    <button type="submit">Подтвердить заказ</button>
-</form>
+            <p class="cart-total" style="margin: 1rem 0;">
+                <span>Итого:</span>
+                <strong><?= number_format($total, 0, '', ' ') ?> ₽</strong>
+            </p>
+
+            <button type="submit" class="auth-btn update-btn">Подтвердить заказ</button>
+        </form>
+    </div>
+
+    <div class="cart-links">
+        <a href="cart.php" class="link-back">← Назад в корзину</a>
+        <a href="catalog.php" class="link-profile">Продолжить покупки</a>
+        <a href="profile.php" class="link-profile">Профиль</a>
+    </div>
+</div>
+
+<script>
+    (function () {
+        const form = document.getElementById('checkoutForm');
+
+        if (!form) return;
+
+        form.addEventListener('submit', async function (e) {
+            e.preventDefault();
+
+            try {
+                const response = await fetch(form.action, {
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json'
+                    },
+                    body: new FormData(form)
+                });
+
+                const data = await response.json();
+
+                if (data.ok) {
+                    if (data.message) {
+                        alert(data.message);
+                    }
+
+                    window.location.href = data.redirect || 'orders.php';
+                } else {
+                    alert(data.message || 'Не удалось оформить заказ');
+                }
+            } catch (error) {
+                console.error(error);
+                alert('Ошибка сети при оформлении заказа');
+            }
+        });
+    })();
+</script>
 </body>
 </html>
