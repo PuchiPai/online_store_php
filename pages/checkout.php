@@ -5,7 +5,17 @@ requireLogin();
 $cart = $_SESSION['cart'] ?? [];
 
 if (empty($cart)) {
-    die('Корзина пуста');
+    require_once __DIR__ . '/../includes/header.php';
+    ?>
+    <div class="checkout-container">
+        <div class="checkout-empty">
+            <p>🛒 Корзина пуста</p>
+            <a href="catalog.php" class="auth-btn">Перейти в каталог</a>
+        </div>
+    </div>
+    <?php
+    require_once __DIR__ . '/../includes/footer.php';
+    exit;
 }
 
 $ids = array_map('intval', array_keys($cart));
@@ -17,97 +27,111 @@ $result = $conn->query("
     WHERE id IN ($ids_sql)
 ");
 
-$items = [];
-$total = 0;
-
 while ($row = $result->fetch_assoc()) {
-    $items[(int)$row['id']] = $row;
+    $items[(int)$row["id"]] = $row;
 }
+
+foreach ($cart as $product_id => $quantity) {
+    $product_id = (int)$product_id;
+    $quantity = (int)$quantity;
+
+    if (isset($items[$product_id])) {
+        $total += ((float)$items[$product_id]["price"] * $quantity);
+    }
+}
+
+$success = false;
+$error = null;
+
+if ($_SERVER["REQUEST_METHOD"] === "POST") {
+    $user_id = currentUserId();
+
+    $conn->begin_transaction();
+
+    try {
+        $stmt = $conn->prepare("INSERT INTO orders (user_id, status) VALUES (?, 'new')");
+        $stmt->bind_param("i", $user_id);
+        $stmt->execute();
+
+        $order_id = $conn->insert_id;
+
+        $stmt_product = $conn->prepare("SELECT price FROM products WHERE id = ?");
+        $stmt_item = $conn->prepare("
+            INSERT INTO order_items (order_id, product_id, quantity, price)
+            VALUES (?, ?, ?, ?)
+        ");
+
+        foreach ($cart as $product_id => $quantity) {
+            $product_id = (int)$product_id;
+            $quantity = (int)$quantity;
+
+            $stmt_product->bind_param("i", $product_id);
+            $stmt_product->execute();
+            $product_result = $stmt_product->get_result();
+
+            if ($product_result->num_rows === 0) {
+                throw new Exception("Товар не найден");
+            }
+
+            $product = $product_result->fetch_assoc();
+            $price = (float)$product["price"];
+
+            $stmt_item->bind_param("iiid", $order_id, $product_id, $quantity, $price);
+            $stmt_item->execute();
+        }
+
+        $conn->commit();
+        unset($_SESSION["cart"]);
+        $success = true;
+        $order_id_success = $order_id;
+    } catch (Throwable $e) {
+        $conn->rollback();
+        $error = "Ошибка оформления заказа: " . h($e->getMessage());
+    }
+}
+
+// Подключаем хедер
+require_once __DIR__ . '/../includes/header.php';
 ?>
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Оформление заказа — TechStore</title>
-    <link rel="stylesheet" href="/assets/css/style.css">
-</head>
-<body class="auth-page">
-<div class="profile-container">
-    <h1 class="cart-title">Оформление заказа</h1>
 
-    <div class="profile-card">
-        <form id="checkoutForm" action="../api/create_order.php" method="post">
-            <h3>Состав заказа</h3>
+<div class="checkout-container">
+    <?php if ($success): ?>
+        <div class="checkout-success">
+            <h2>✅ Заказ успешно оформлен</h2>
+            <p>Номер заказа: <strong><?= (int)$order_id_success ?></strong></p>
+            <p><a href="catalog.php" class="auth-btn">Вернуться в каталог</a></p>
+        </div>
+    <?php elseif ($error): ?>
+        <div class="checkout-error">
+            <p>❌ <?= $error ?></p>
+            <p><a href="cart.php">← Назад в корзину</a></p>
+        </div>
+    <?php else: ?>
+        <h1 class="checkout-title">Оформление заказа</h1>
+        <p class="checkout-back"><a href="cart.php">← Назад в корзину</a></p>
 
+        <h3 class="checkout-subtitle">Состав заказа</h3>
+        <div class="checkout-items-list">
             <?php foreach ($cart as $product_id => $quantity): ?>
                 <?php $product_id = (int)$product_id; ?>
                 <?php if (!isset($items[$product_id])) continue; ?>
-                <?php
-                $sum = (float)$items[$product_id]['price'] * (int)$quantity;
-                $total += $sum;
-                ?>
-                <p style="margin: 0.5rem 0;">
-                    <?= h($items[$product_id]['name']) ?> —
-                    <?= (int)$quantity ?> шт × <?= number_format((float)$items[$product_id]['price'], 0, '', ' ') ?> ₽ =
-                    <?= number_format($sum, 0, '', ' ') ?> ₽
-                </p>
+                <div class="checkout-item">
+                    <span class="checkout-item-name"><?= h($items[$product_id]["name"]) ?></span>
+                    <span class="checkout-item-qty"><?= (int)$quantity ?> шт.</span>
+                    <span class="checkout-item-price"><?= number_format($items[$product_id]["price"] * $quantity, 0, '', ' ') ?> ₽</span>
+                </div>
             <?php endforeach; ?>
+        </div>
 
-            <hr>
+        <div class="checkout-total">
+            <span>Итого:</span>
+            <strong><?= number_format($total, 0, '', ' ') ?> ₽</strong>
+        </div>
 
-            <p class="cart-total" style="margin: 1rem 0;">
-                <span>Итого:</span>
-                <strong><?= number_format($total, 0, '', ' ') ?> ₽</strong>
-            </p>
-
-            <button type="submit" class="auth-btn update-btn">Подтвердить заказ</button>
+        <form method="post" class="checkout-form">
+            <button type="submit" class="auth-btn checkout-submit">Подтвердить заказ</button>
         </form>
-    </div>
-
-    <div class="cart-links">
-        <a href="cart.php" class="link-back">← Назад в корзину</a>
-        <a href="catalog.php" class="link-profile">Продолжить покупки</a>
-        <a href="profile.php" class="link-profile">Профиль</a>
-    </div>
+    <?php endif; ?>
 </div>
 
-<script>
-    (function () {
-        const form = document.getElementById('checkoutForm');
-
-        if (!form) return;
-
-        form.addEventListener('submit', async function (e) {
-            e.preventDefault();
-
-            try {
-                const response = await fetch(form.action, {
-                    method: 'POST',
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest',
-                        'Accept': 'application/json'
-                    },
-                    body: new FormData(form)
-                });
-
-                const data = await response.json();
-
-                if (data.ok) {
-                    if (data.message) {
-                        alert(data.message);
-                    }
-
-                    window.location.href = data.redirect || 'orders.php';
-                } else {
-                    alert(data.message || 'Не удалось оформить заказ');
-                }
-            } catch (error) {
-                console.error(error);
-                alert('Ошибка сети при оформлении заказа');
-            }
-        });
-    })();
-</script>
-</body>
-</html>
+<?php require_once __DIR__ . '/../includes/footer.php'; ?>

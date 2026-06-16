@@ -22,50 +22,95 @@ if (!$order) {
     die("Заказ не найден");
 }
 
-$items = json_decode($order['items_json'], true);
-if (!is_array($items)) {
-    $items = [];
-}
+// Добавляем image в запрос
+$itemsStmt = $conn->prepare("
+    SELECT oi.quantity, oi.price, p.id, p.name, p.image
+    FROM order_items oi
+    JOIN products p ON p.id = oi.product_id
+    WHERE oi.order_id = ?
+");
+$itemsStmt->bind_param("i", $id);
+$itemsStmt->execute();
+$items = $itemsStmt->get_result();
+
+$pageTitle = 'Заказ #' . $id;
 ?>
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <title>Заказ #<?= (int)$order['id'] ?></title>
-</head>
-<body>
-<h2>Заказ #<?= (int)$order['id'] ?></h2>
 
-<p>Статус: <b><?= h($order['status']) ?></b></p>
-<p>Дата: <?= h($order['created_at']) ?></p>
+<?php require_once __DIR__ . '/../includes/header.php'; ?>
 
-<h3>Товары</h3>
+<script>
+    document.body.classList.add('auth-page');
+</script>
 
-<table border="1" cellpadding="8" cellspacing="0">
-    <tr>
-        <th>Название</th>
-        <th>Количество</th>
-        <th>Цена</th>
-        <th>Сумма</th>
-    </tr>
+<div class="profile-container" style="margin-top: 100px;">
+    <h1 class="profile-title" style="margin-bottom: 0.5rem;">Заказ #<?= $order['id'] ?></h1>
 
-    <?php foreach ($items as $item): ?>
-        <?php
-        $qty = (int)$item['quantity'];
-        $price = (float)$item['price'];
-        $sum = $qty * $price;
+    <!-- Хлебные крошки  -->
+    <div class="breadcrumbs" style="margin-bottom: 1.5rem; font-size: 0.85rem;">
+        <a href="/">Главная</a> / 
+        <a href="profile.php">Профиль</a> / 
+        <a href="orders.php">Мои заказы</a> / 
+        <span>Заказ #<?= $id ?></span>
+    </div>
+
+    <div class="profile-card" style="display: block; padding: 1.5rem;">
+        <!-- Статус и дата -->
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1rem;">
+            <div>
+                <strong>Статус:</strong>
+                <span style="background: var(--off-white); padding: 0.2rem 0.8rem; border-radius: 20px; font-size: 0.85rem; margin-left: 0.5rem;">
+                    <?= h($order['status']) ?>
+                </span>
+            </div>
+            <div>
+                <strong>Дата:</strong> <?= date('d.m.Y H:i', strtotime($order['created_at'])) ?>
+            </div>
+        </div>
+
+        <h3 style="font-size: 1.2rem; font-weight: 500; margin: 1.5rem 0 1rem 0;">Состав заказа</h3>
+
+        <!-- Список товаров в стиле корзины -->
+        <?php 
+        $total = 0;
+        while ($item = $items->fetch_assoc()):
+            $sum = $item['quantity'] * $item['price'];
+            $total += $sum;
         ?>
-        <tr>
-            <td><?= h($item['name']) ?></td>
-            <td><?= $qty ?></td>
-            <td><?= $price ?></td>
-            <td><?= $sum ?></td>
-        </tr>
-    <?php endforeach; ?>
-</table>
+            <div class="cart-item-card" style="margin-bottom: 1rem;">
+                <!-- Картинка -->
+                <div class="cart-item-img">
+                    <?php if (!empty($item['image']) && file_exists("../uploads/products/" . $item['image'])): ?>
+                        <img src="../uploads/products/<?= h($item['image']) ?>" alt="<?= h($item['name']) ?>">
+                    <?php else: ?>
+                        <img src="/assets/images/no-image.png" alt="Нет фото">
+                    <?php endif; ?>
+                </div>
+                <!-- Информация -->
+                <div class="cart-item-info" style="flex: 2;">
+                    <div class="cart-item-title"><?= h($item['name']) ?></div>
+                    <div class="cart-item-price"><?= number_format($item['price'], 0, '', ' ') ?> ₽</div>
+                </div>
+                <!-- Количество -->
+                <div class="cart-item-quantity" style="width: auto;">
+                    <span style="margin-right: 0.5rem;"><?= $item['quantity'] ?> шт</span>
+                </div>
+                <!-- Сумма -->
+                <div class="cart-item-total">
+                    <?= number_format($sum, 0, '', ' ') ?> ₽
+                </div>
+            </div>
+        <?php endwhile; ?>
 
-<p><b>Итого: <?= h($order['total_amount']) ?> ₽</b></p>
+        <!-- Итоговая сумма -->
+        <div class="checkout-total" style="margin-top: 1rem; padding-top: 1rem; font-size: 1.3rem;">
+            <span>Итого:</span>
+            <strong><?= number_format($total, 0, '', ' ') ?> ₽</strong>
+        </div>
+    </div>
 
-<p><a href="orders.php">← Назад</a></p>
-</body>
-</html>
+    <div class="profile-actions" style="margin-top: 2rem;">
+        <a href="orders.php" class="profile-link">← Назад к заказам</a>
+    </div>
+</div>
+
+<?php require_once __DIR__ . '/../includes/footer.php'; ?>
