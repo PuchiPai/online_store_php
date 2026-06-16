@@ -2,7 +2,7 @@
 require_once __DIR__ . '/../includes/bootstrap.php';
 requireLogin();
 
-$cart = $_SESSION["cart"] ?? [];
+$cart = $_SESSION['cart'] ?? [];
 
 if (empty($cart)) {
     require_once __DIR__ . '/../includes/header.php';
@@ -17,9 +17,6 @@ if (empty($cart)) {
     require_once __DIR__ . '/../includes/footer.php';
     exit;
 }
-
-$items = [];
-$total = 0;
 
 $ids = array_map('intval', array_keys($cart));
 $ids_sql = implode(',', $ids);
