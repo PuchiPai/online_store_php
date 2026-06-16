@@ -1999,3 +1999,7 @@ a.category-item:visited {
 
   line-height: 1.7;
 }
+
+.auth-container {
+  margin: 140px auto 60px; /* было 80px */
+}

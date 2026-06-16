@@ -17,7 +17,7 @@ require_once __DIR__ . '/functions.php';
     
 </head>
 
-<body>
+<body class="<?= $body_class ?? '' ?>">
 
 <header class="header">
     <div class="navbar">
