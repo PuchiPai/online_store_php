@@ -127,7 +127,7 @@ CREATE TABLE `users` (
 INSERT INTO `users` (`id`, `name`, `email`, `password`, `role`, `created_at`) VALUES
 (1, 'katya', 'cdreemurr97@gmail.com', '$2y$10$Nso9/CavcA5MvZvGFvb1yOWkVhksx65sYbnsF1CGMCmXzuqM3QiA6', 'user', '2026-06-06 05:56:54'),
 (2, 'admin', 'admin@admin.ru', '$2y$10$enuhIwhVslh8b7utXibNY.HGQ2v6YaqxrIUbqfiAyjBZ5QiRO4biy', 'admin', '2026-06-06 06:16:48'),
-(3, 'Арина', 'kozlovich06@bk.ru', '$2y$10$I8wu/FEEHxgOORZbN.erNO8rv/A0J62PIDnpvhyLAjYTlUkDx3KL2', 'user', '2026-06-08 15:05:21');
+
 
 --
 -- Индексы сохранённых таблиц

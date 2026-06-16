@@ -9,7 +9,7 @@ $email = trim($_POST["email"] ?? '');
 $password = $_POST["password"] ?? '';
 
 if ($email === '' || $password === '') {
-    die("Заполните все поля");
+    redirect('login.php?error=empty');
 }
 
 $stmt = $conn->prepare("SELECT id, name, email, password, role FROM users WHERE email = ?");
@@ -18,13 +18,13 @@ $stmt->execute();
 $result = $stmt->get_result();
 
 if ($result->num_rows === 0) {
-    die("Пользователь не найден");
+    redirect('login.php?error=not_found');
 }
 
 $user = $result->fetch_assoc();
 
 if (!password_verify($password, $user["password"])) {
-    die("Неверный пароль");
+    redirect('login.php?error=wrong_password');
 }
 
 $_SESSION["user_id"] = $user["id"];

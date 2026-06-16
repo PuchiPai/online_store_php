@@ -14,53 +14,62 @@ $stmt->execute();
 $result = $stmt->get_result();
 
 if ($result->num_rows === 0) {
-    die("Товар не найден");
+    $pageTitle = 'Товар не найден';
+    require_once __DIR__ . '/../includes/header.php';
+    echo '<div class="catalog-container"><p>Товар не найден. <a href="catalog.php">Вернуться в каталог</a></p></div>';
+    require_once __DIR__ . '/../includes/footer.php';
+    exit;
 }
 
 $product = $result->fetch_assoc();
+$pageTitle = h($product["name"]);
 ?>
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <title><?= h($product["name"]) ?></title>
-</head>
-<body>
-<p><a href="catalog.php">← Назад в каталог</a></p>
 
-<p>
-    <?php if (isLoggedIn()): ?>
-        <a href="profile.php">Профиль</a> |
-        <a href="cart.php">Корзина (<?= cartCount() ?>)</a> |
-        <?php if (isAdmin()): ?>
-            <a href="../admin/index.php">Админка</a> |
-        <?php endif; ?>
-        <a href="logout.php">Выйти</a>
-    <?php else: ?>
-        <a href="login.php">Войти</a> |
-        <a href="register.php">Регистрация</a>
-    <?php endif; ?>
-</p>
+<?php require_once __DIR__ . '/../includes/header.php'; ?>
 
-<h2><?= h($product["name"]) ?></h2>
-<p><b>Категория:</b> <?= h($product["category_name"] ?? 'Без категории') ?></p>
-<p><b>Цена:</b> <?= h($product["price"]) ?> ₽</p>
-<p><b>Описание:</b> <?= nl2br(h($product["description"] ?? '')) ?></p>
+<div class="product-detail-container">
+    <!-- Хлебные крошки (заменяют навигацию) -->
+    <div class="breadcrumbs">
+        <a href="/">Главная</a> / 
+        <a href="catalog.php">Каталог</a> / 
+        <span><?= h($product["name"]) ?></span>
+    </div>
 
-<?php if (!empty($product["image"])): ?>
-    <p>
-        <img src="../uploads/products/<?= h($product["image"]) ?>" width="250" alt="">
-    </p>
-<?php endif; ?>
+    <div class="product-detail-grid">
+        <!-- Левая колонка – картинка с белым фоном -->
+        <div class="product-detail-image" style="background: #ffffff;">
+            <?php if (!empty($product["image"]) && file_exists("../uploads/products/" . $product["image"])): ?>
+                <img src="../uploads/products/<?= h($product["image"]) ?>" alt="<?= h($product["name"]) ?>">
+            <?php else: ?>
+                <img src="/assets/images/no-image.png" alt="Нет фото">
+            <?php endif; ?>
+        </div>
 
-<?php if (isLoggedIn()): ?>
-    <form action="../api/add_to_cart.php" method="post">
-        <input type="hidden" name="product_id" value="<?= (int)$product["id"] ?>">
-        <input type="number" name="quantity" value="1" min="1">
-        <button type="submit">Добавить в корзину</button>
-    </form>
-<?php else: ?>
-    <p><a href="login.php">Войдите, чтобы добавить в корзину</a></p>
-<?php endif; ?>
-</body>
-</html>
+        <!-- Правая колонка – информация -->
+        <div class="product-detail-info">
+            <h1 class="product-detail-title"><?= h($product["name"]) ?></h1>
+            <p class="product-detail-category">
+                Категория: <?= h($product["category_name"] ?? 'Без категории') ?>
+            </p>
+            <p class="product-detail-price"><?= number_format($product["price"], 0, '', ' ') ?> ₽</p>
+            <div class="product-detail-description">
+                <?= nl2br(h($product["description"] ?? '')) ?>
+            </div>
+
+            <?php if (isLoggedIn()): ?>
+                <form action="../api/add_to_cart.php" method="post" class="product-detail-form">
+    <input type="hidden" name="product_id" value="<?= (int)$product["id"] ?>">
+    <div class="quantity-wrapper">
+        <label for="quantity">Количество:</label>
+        <input type="number" name="quantity" id="quantity" value="1" min="1" class="quantity-input">
+    </div>
+    <button type="submit" class="btn-add-cart">Добавить в корзину</button>
+</form>
+            <?php else: ?>
+                <p class="login-to-cart"><a href="login.php">Войдите, чтобы добавить в корзину</a></p>
+            <?php endif; ?>
+        </div>
+    </div>
+</div>
+
+<?php require_once __DIR__ . '/../includes/footer.php'; ?>
