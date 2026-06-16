@@ -9,14 +9,14 @@ if ($id <= 0) {
     die("Некорректный ID");
 }
 
-$orderStmt = $conn->prepare("
-    SELECT * FROM orders
+$stmt = $conn->prepare("
+    SELECT id, status, total_amount, created_at, items_json
+    FROM orders
     WHERE id = ? AND user_id = ?
 ");
-$orderStmt->bind_param("ii", $id, $userId);
-$orderStmt->execute();
-
-$order = $orderStmt->get_result()->fetch_assoc();
+$stmt->bind_param("ii", $id, $userId);
+$stmt->execute();
+$order = $stmt->get_result()->fetch_assoc();
 
 if (!$order) {
     die("Заказ не найден");

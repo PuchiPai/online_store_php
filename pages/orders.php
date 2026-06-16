@@ -5,7 +5,8 @@ requireLogin();
 $userId = currentUserId();
 
 $stmt = $conn->prepare("
-    SELECT * FROM orders
+    SELECT id, status, total_amount, created_at
+    FROM orders
     WHERE user_id = ?
     ORDER BY id DESC
 ");
